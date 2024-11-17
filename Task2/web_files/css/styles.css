@@ -1,0 +1,25 @@
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f4f4f4;
+    padding: 20px;
+}
+h1, h2 {
+    color: #0056b3;
+}
+.team {
+    display: flex;
+    gap: 20px;
+}
+.member {
+    border: 1px solid #ddd;
+    background: #fff;
+    padding: 10px;
+    text-align: center;
+}
+.member img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+}
