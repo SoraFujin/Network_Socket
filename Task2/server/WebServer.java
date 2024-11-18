@@ -6,9 +6,9 @@ import java.nio.file.Files;
 
 public class WebServer {
     private static final int PORT = 5698;
-    private static final String BASE_DIRECTORY = "./Task2/web_files/html";
-    private static final String CSS_DIRECTORY = "./Task2/web_files/css";
-    private static final String IMAGES_DIRECTORY = "./Task2/web_files/images";
+    private static final String BASE_DIRECTORY = "./Task2/web_files/html/";
+    private static final String CSS_DIRECTORY = "./Task2/web_files/css/";
+    private static final String IMAGES_DIRECTORY = "./Task2/web_files/images/";
 
     public static void main(String[] args) {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
@@ -44,34 +44,38 @@ public class WebServer {
 
         String[] tokens = requestLine.split(" ");
         if (tokens.length < 2 || !tokens[0].equals("GET")) {
-            sendErrorResponse(output, clientSocket, 404, "Not Found");
+            sendErrorResponse(output, clientSocket, 400, "Bad Request");
             return;
         }
 
         String requestedFile = tokens[1];
         if (requestedFile.equals("/")) {
-            requestedFile = "/main_en.html";
+            requestedFile = "/main_en.html"; 
         } else if (requestedFile.equals("/ar")) {
-            requestedFile = "/main_ar.html";
+            requestedFile = "/main_ar.html"; 
         }
 
         String filePath = BASE_DIRECTORY + requestedFile;
-
         if (requestedFile.startsWith("/css/")) {
-            filePath = CSS_DIRECTORY + requestedFile.substring(5);
+            filePath = CSS_DIRECTORY + requestedFile.substring(4); 
         } else if (requestedFile.startsWith("/images/")) {
-            filePath = IMAGES_DIRECTORY + requestedFile.substring(8);
+            filePath = IMAGES_DIRECTORY + requestedFile.substring(8); 
         }
 
+        System.out.println("File Path: " + filePath);
+        System.out.println("Content-Type: " + getContentType(filePath));
         File file = new File(filePath);
 
-        // File does not exist or is a directory
         if (!file.exists() || file.isDirectory()) {
-            sendErrorResponse(output, clientSocket, 404, "Not Found");
+            if (requestedFile.equals("/supporting_material_en.html")
+                    || requestedFile.equals("/supporting_material_ar.html")) {
+                processSupportingMaterialRequest(reader, writer);
+            } else {
+                sendErrorResponse(output, clientSocket, 404, "Not Found");
+            }
             return;
         }
 
-        // Serve the requested file
         String contentType = getContentType(filePath);
         writer.println("HTTP/1.1 200 OK");
         writer.println("Content-Type: " + contentType);
