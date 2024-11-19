@@ -8,7 +8,7 @@ public class WebServer {
     private static final int PORT = 5698;
     private static final String BASE_DIRECTORY = "./Task2/web_files/html/";
     private static final String CSS_DIRECTORY = "./Task2/web_files/css/";
-    private static final String IMAGES_DIRECTORY = "./Task2/web_files/images/";
+    private static final String IMAGES_DIRECTORY = "./Task2/images/";
 
     public static void main(String[] args) {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
