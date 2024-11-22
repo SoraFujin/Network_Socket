@@ -71,29 +71,42 @@ td {
     vertical-align: top;
 }
 
+/* Team Member Styling */
+.team {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 20px;
+}
+
 .team-member {
     background-color: #ecf0f1;
     border: 1px solid #bdc3c7;
     border-radius: 8px;
     padding: 15px;
     width: 45%;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s;
+}
+
+.team-member:hover {
+    transform: scale(1.05);
 }
 
 img {
-    max-width: 30%; /* Adjust as needed */
+    max-width: 100%; /* Ensure images are responsive */
     height: auto;
     margin: 20px 0;
     border-radius: 5px;
 }
 
 .team-member img {
-    width: 70%; /* Adjust as needed */
+    width: 70%; /* Adjust image size within team member */
     height: auto;
     border-radius: 8px;
-    margin: 0 auto; /* Center the image within its container */
-    display: block; /* Ensures proper alignment */
+    margin: 0 auto; /* Center the image */
+    display: block;
 }
-
 
 .team-member h3 {
     font-size: 1.2rem;
@@ -147,5 +160,10 @@ nav a:hover {
 
     h3 {
         font-size: 1rem;
+    }
+
+    .team {
+        flex-direction: column;
+        align-items: center;
     }
 }

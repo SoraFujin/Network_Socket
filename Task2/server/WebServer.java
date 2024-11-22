@@ -10,23 +10,30 @@ public class WebServer {
     private static final String CSS_DIRECTORY = "./Task2/web_files/css/";
     private static final String IMAGES_DIRECTORY = "./Task2/images/";
 
+    private static ServerSocket serverSocket;
+    private static Socket clientSocket;
+
+    
     public static void main(String[] args) {
-        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+        try {
+            serverSocket = new ServerSocket(PORT);
             System.out.println("Server connected to port: \"" + PORT + "\"");
             System.out.println("Server Started");
             System.out.println("Waiting for client...");
-
+            
             while (true) {
-                try (Socket clientSocket = serverSocket.accept()) {
+                try {
+                    clientSocket = serverSocket.accept();
                     System.out.println("Client connected: " + clientSocket.getInetAddress());
                     handleClient(clientSocket);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-        } catch (IOException e) {
+        } catch(IOException e) {
             e.printStackTrace();
         }
+        
     }
 
     private static void handleClient(Socket clientSocket) throws IOException {
@@ -49,17 +56,23 @@ public class WebServer {
         }
 
         String requestedFile = tokens[1];
-        if (requestedFile.equals("/")) {
-            requestedFile = "/main_en.html"; 
+        if (requestedFile.equals("/") || requestedFile.equals("/en")) {
+            requestedFile = "/main_en.html";
         } else if (requestedFile.equals("/ar")) {
-            requestedFile = "/main_ar.html"; 
+            requestedFile = "/main_ar.html";
         }
 
         String filePath = BASE_DIRECTORY + requestedFile;
+        System.out.println("File path processing: " + filePath);
         if (requestedFile.startsWith("/css/")) {
-            filePath = CSS_DIRECTORY + requestedFile.substring(4); 
+            filePath = CSS_DIRECTORY + requestedFile.substring(4);
         } else if (requestedFile.startsWith("/images/")) {
-            filePath = IMAGES_DIRECTORY + requestedFile.substring(8); 
+            filePath = IMAGES_DIRECTORY + requestedFile.substring(8);
+        }
+
+        if (requestedFile.startsWith("/requested_material")) {
+            processSupportingMaterialRequest(reader, writer, requestedFile);
+            return; 
         }
 
         System.out.println("File Path: " + filePath);
@@ -69,7 +82,7 @@ public class WebServer {
         if (!file.exists() || file.isDirectory()) {
             if (requestedFile.equals("/supporting_material_en.html")
                     || requestedFile.equals("/supporting_material_ar.html")) {
-                processSupportingMaterialRequest(reader, writer);
+                processSupportingMaterialRequest(reader, writer, requestedFile); 
             } else {
                 sendErrorResponse(output, clientSocket, 404, "Not Found");
             }
@@ -87,22 +100,57 @@ public class WebServer {
         output.flush();
     }
 
-    private static void processSupportingMaterialRequest(BufferedReader reader, PrintWriter writer) {
-        try {
-            String fileName = reader.readLine();
-            if (fileName.endsWith(".png") || fileName.endsWith(".jpg")) {
-                writer.println("HTTP/1.1 307 Temporary Redirect");
-                writer.println("Location: https://www.google.com/search?tbm=isch&q=" + fileName);
-            } else if (fileName.endsWith(".mp4")) {
-                writer.println("HTTP/1.1 307 Temporary Redirect");
-                writer.println("Location: https://www.youtube.com/results?search_query=" + fileName);
-            } else {
-                sendErrorResponse(writer, 404, "File Not Found");
+    private static void processSupportingMaterialRequest(BufferedReader reader, PrintWriter writer,
+            String requestedFile) throws IOException {
+        String queryString = requestedFile.contains("?") ? requestedFile.split("\\?")[1] : "";
+        System.out.println("Query String: " + queryString);
+
+        String type = "";
+        String material = "";
+
+        if (!queryString.isEmpty()) {
+            String[] params = queryString.split("&");
+            for (String param : params) {
+                String[] keyValue = param.split("=");
+                if (keyValue.length == 2) {
+                    String key = keyValue[0];
+                    String value = keyValue[1];
+                    System.out.println("Key: " + key + " Value: " + value);
+                    if ("type".equals(key)) {
+                        type = value;
+                    } else if ("material".equals(key)) {
+                        material = value;
+                    }
+                }
             }
-            writer.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
+
+        System.out.println("Type: " + type);
+        System.out.println("Material: " + material);
+
+        if ("image".equals(type)) {
+            writer.println("HTTP/1.1 307 Temporary Redirect");
+            writer.println("Location: https://www.google.com/search?tbm=isch&q=" + material);
+        } else if ("video".equals(type)) {
+            writer.println("HTTP/1.1 307 Temporary Redirect");
+            writer.println("Location: https://www.youtube.com/results?search_query=" + material);
+        } else {
+            sendErrorResponse(writer, clientSocket, 400, "Invalid Request Type");
+            return;
+        }
+
+        writer.println("Connection: close");
+        writer.println(); 
+        writer.flush();
+    }
+
+    private static void sendErrorResponse(PrintWriter writer, Socket clientSocket, int statusCode, String message) {
+        writer.println("HTTP/1.1 " + statusCode + " " + message);
+        writer.println("Content-Type: text/html");
+        writer.println("Connection: close");
+        writer.println();
+        writer.println("<html><body><h1>" + message + "</h1></body></html>");
+        writer.flush();
     }
 
     private static void sendErrorResponse(OutputStream output, Socket clientSocket, int statusCode,
@@ -121,21 +169,17 @@ public class WebServer {
         writer.flush();
     }
 
-    private static void sendErrorResponse(PrintWriter writer, int statusCode, String statusMessage) {
-        writer.println("HTTP/1.1 " + statusCode + " " + statusMessage);
-        writer.println("Content-Type: text/html");
-        writer.println("Connection: close");
-        writer.println();
-        writer.println("<html><body><h1>" + statusCode + " " + statusMessage + "</h1></body></html>");
-        writer.flush();
-    }
-
     private static String getContentType(String filePath) {
-        if (filePath.endsWith(".html")) return "text/html";
-        if (filePath.endsWith(".css")) return "text/css";
-        if (filePath.endsWith(".png")) return "image/png";
-        if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) return "image/jpeg";
-        if (filePath.endsWith(".mp4")) return "video/mp4";
+        if (filePath.endsWith(".html"))
+            return "text/html";
+        if (filePath.endsWith(".css"))
+            return "text/css";
+        if (filePath.endsWith(".png"))
+            return "image/png";
+        if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg"))
+            return "image/jpeg";
+        if (filePath.endsWith(".mp4"))
+            return "video/mp4";
         return "application/octet-stream";
     }
 }

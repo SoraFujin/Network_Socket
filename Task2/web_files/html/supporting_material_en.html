@@ -13,10 +13,15 @@
     <p>Enter the name of the file (image or video) related to the computer networking topic discussed in the main page.
         If the requested file is unavailable, you will be redirected to external resources.</p>
 
-    <form action="/Task2/web_files/html/supporting_material_en.html" method="GET">
-        <label for="fileName">Enter file name:</label>
-        <input type="text" id="fileName" name="fileName" required>
-        <button type="submit">Request File</button>
+    <form action="/requested_material" method="GET">
+        <label for="material">Enter file name:</label>
+        <input type="text" id="material" name="material" required>
+        <label for="type">Type:</label>
+        <select id="type" name="type" required>
+            <option value="image">Image</option>
+            <option value="video">Video</option>
+        </select>
+        <button type="submit">Request</button>
     </form>
 
     <nav>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 
 <head>
     <meta charset="UTF-8">
@@ -10,17 +10,22 @@
 
 <body>
     <h1>طلب المواد الداعمة</h1>
-    <p>أدخل اسم الملف (صورة أو فيديو) المتعلق بموضوع الشبكات الحاسوبية الذي تم مناقشته في الصفحة الرئيسية. إذا كان الملف
-        المطلوب غير متاح، سيتم إعادة توجيهك إلى الموارد الخارجية.</p>
+    <p>ادخل اسم الملف (صورة أو فيديو) المتعلق بموضوع الشبكات الحاسوبية الذي تم مناقشته في الصفحة الرئيسية.
+        إذا كان الملف المطلوب غير متاح، ستتم إعادة توجيهك إلى الموارد الخارجية.</p>
 
-    <form action="supporting_material_styles.css" method="GET">
-        <label for="fileName">أدخل اسم الملف:</label>
-        <input type="text" id="fileName" name="fileName" required>
+    <form action="/requested_material" method="GET">
+        <label for="material">أدخل اسم الملف:</label>
+        <input type="text" id="material" name="material" required>
+        <label for="type">نوع</label>
+        <select id="type" name="type" required>
+            <option value="image">صورة</option>
+            <option value="video">فيديو</option>
+        </select>
         <button type="submit">طلب الملف</button>
     </form>
 
     <nav>
-        <a href="/main_ar.html">العودة إلى الصفحة الرئيسية (AR)</a>
+        <a href="main_ar.html">الرجوع إلى الصفحة الرئيسية (AR)</a>
     </nav>
 </body>
 
