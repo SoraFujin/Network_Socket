@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supporting Materials - EN</title>
+    <link rel="stylesheet" href="css/supporting_material_styles.css">
+</head>
+
+<body>
+    <h1>Request Supporting Materials</h1>
+    <p>Enter the name of the file (image or video) related to the computer networking topic discussed in the main page.
+        If the requested file is unavailable, you will be redirected to external resources.</p>
+
+    <form action="/requested_material" method="GET">
+        <label for="material">Enter file name:</label>
+        <input type="text" id="material" name="material" required>
+        <label for="type">Type:</label>
+        <select id="type" name="type" required>
+            <option value="image">Image</option>
+            <option value="video">Video</option>
+        </select>
+        <button type="submit">Request</button>
+    </form>
+
+    <nav>
+        <a href="main_en.html">Back to Main Page (EN)</a>
+    </nav>
+</body>
+
+</html>

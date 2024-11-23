@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ar">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المواد الداعمة - AR</title>
+    <link rel="stylesheet" href="css/supporting_material_styles.css">
+</head>
+
+<body>
+    <h1>طلب المواد الداعمة</h1>
+    <p>ادخل اسم الملف (صورة أو فيديو) المتعلق بموضوع الشبكات الحاسوبية الذي تم مناقشته في الصفحة الرئيسية.
+        إذا كان الملف المطلوب غير متاح، ستتم إعادة توجيهك إلى الموارد الخارجية.</p>
+
+    <form action="/requested_material" method="GET">
+        <label for="material">أدخل اسم الملف:</label>
+        <input type="text" id="material" name="material" required>
+        <label for="type">نوع</label>
+        <select id="type" name="type" required>
+            <option value="image">صورة</option>
+            <option value="video">فيديو</option>
+        </select>
+        <button type="submit">طلب الملف</button>
+    </form>
+
+    <nav>
+        <a href="main_ar.html">الرجوع إلى الصفحة الرئيسية (AR)</a>
+    </nav>
+</body>
+
+</html>
