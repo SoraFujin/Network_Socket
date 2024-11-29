@@ -1,35 +1,95 @@
 import java.net.*;
+import java.io.*;
+import java.util.concurrent.*;
 
 public class GameClient {
-    public static void main(String[] args) {
-        String serverAddress = "127.0.0.1";
-        final int serverPort = 5689;
-        String message = "JOIN";
+    private static volatile boolean gameStarted = false;
+    private static volatile boolean waitingForInput = false;
 
+    public static void main(String[] args) {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        byte[] responseBuffer = new byte[1024];
         DatagramSocket socket = null;
 
         try {
-            // Step 1: Create the socket
+            // Get the server IP
+            System.out.println("Welcome! Please enter the server IP address (e.g., localhost):");
+            String serverAddress = reader.readLine().trim();
+
+            // Get the server port
+            System.out.println("Please enter the server port (e.g., 5689):");
+            int serverPort;
+            while (true) {
+                try {
+                    serverPort = Integer.parseInt(reader.readLine().trim());
+                    break;
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid port number. Please enter a valid port:");
+                }
+            }
+
+            // Get the user name
+            System.out.println("Please enter your name:");
+            String name = reader.readLine().trim();
+            while (name.isEmpty()) {
+                System.out.println("Name cannot be empty. Please enter your name:");
+                name = reader.readLine().trim();
+            }
+
+            // Create the socket
             socket = new DatagramSocket();
-
-            // Step 2: Convert message to bytes
-            byte[] buffer = message.getBytes();
-
-            // Step 3: Create the DatagramPacket
             InetAddress serverInetAddress = InetAddress.getByName(serverAddress);
+
+            // Send join message
+            String playerJoinMessage = "JOIN-PLAYER:" + name;
+            byte[] buffer = playerJoinMessage.getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, serverInetAddress, serverPort);
-
-            // Step 4: Send the packet
             socket.send(packet);
-            System.out.println("Message sent to the server: " + message);
+            System.out.println("Connected to server at " + serverAddress + ":" + serverPort);
+            System.out.println("Message sent to the server: " + playerJoinMessage);
 
-            // Optionally, you can wait for a response from the server
-            byte[] responseBuffer = new byte[1024];
-            DatagramPacket responsePacket = new DatagramPacket(responseBuffer, responseBuffer.length);
-            socket.receive(responsePacket);
+            // Start the loading animation in a separate thread
+            Thread loadingThread = new Thread(() -> displayLoadingAnimation("Waiting for the game to start..."));
+            loadingThread.start();
 
-            String response = new String(responsePacket.getData(), 0, responsePacket.getLength());
-            System.out.println("Response from server: " + response);
+            String response = "";
+            String previousResponse = "";
+
+            while (true) {
+                // Wait for a response from the server
+                DatagramPacket responsePacket = new DatagramPacket(responseBuffer, responseBuffer.length);
+                socket.receive(responsePacket);
+
+                response = new String(responsePacket.getData(), 0, responsePacket.getLength());
+                if (!response.equals(previousResponse)) {
+                    System.out.println(response);
+                    previousResponse = response;
+
+                    if (response.startsWith("Game over!")) {
+                        System.out.println("Thank you for playing! Disconnecting...");
+                        break;
+                    }
+
+                    if (response.startsWith("Question:") && !waitingForInput) {
+                        // Stop the loading animation once a response is received
+                        gameStarted = true;
+
+                        // Handle user input with timeout
+                        waitingForInput = true;
+                        String answer = getUserInputWithTimeout(reader, 30);
+                        if (answer == null) {
+                            System.out.println("Time's up! Moving to the next question.");
+                        } else {
+                            buffer = answer.getBytes();
+                            packet = new DatagramPacket(buffer, buffer.length, serverInetAddress, serverPort);
+                            socket.send(packet);
+                            System.out.println("Answer sent to server.");
+                        }
+                        // Ensure flag reset even if timeout occurs or input is given
+                        waitingForInput = false;
+                    }
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -37,6 +97,64 @@ public class GameClient {
             if (socket != null) {
                 socket.close();
             }
+            try {
+                reader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static void displayLoadingAnimation(String message) {
+        String[] spinner = { "|", "/", "-", "\\" };
+        int spinnerIndex = 0;
+
+        while (!gameStarted) {
+            System.out.print("\r" + message + " " + spinner[spinnerIndex]);
+            System.out.flush();
+            spinnerIndex = (spinnerIndex + 1) % spinner.length;
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        System.out.print("\r" + " ".repeat(message.length() + 2) + "\r");
+        System.out.flush();
+    }
+
+    private static String getUserInputWithTimeout(BufferedReader reader, int timeoutInSeconds) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<String> future = null;
+
+        try {
+            // Submit the input task
+            future = executor.submit(() -> {
+                try {
+                    return reader.readLine();
+                } catch (IOException e) {
+                    return null;
+                }
+            });
+            
+            // Wait for input or timeout
+            String answer = future.get(timeoutInSeconds, TimeUnit.SECONDS);
+
+            // Return the answer if received
+            return answer;
+
+        } catch (TimeoutException e) {
+            System.out.println("Timeout reached, no input received.");
+            return null; // Return null if timeout occurs
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            // Shutdown the executor after the task completes
+            if (future != null && !future.isDone()) {
+                future.cancel(true);
+            }
+            executor.shutdownNow();
         }
     }
 }
